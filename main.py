@@ -2,96 +2,172 @@
 main.py - fichier principal du programme
 
 """
-import tkinter as tk
-from tkinter import ttk
+import sys
+import time
 
-class App(tk.Tk):
-    def __init__(self, *args, **kwargs):
-        tk.Tk.__init__(self, *args, **kwargs)
-        # Adding a title to the window
-        self.wm_title("ED-Tools")
-        self.iconphoto(False, tk.PhotoImage(file='./assets/ico.png'))
-        self.attributes('-alpha', 0.8)
-        self.attributes('-topmost', 1)
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QGridLayout, QLabel, QWidget, QSystemTrayIcon, QMenu, QVBoxLayout
+from PySide6.QtGui import QIcon, QAction, QFont, QGuiApplication, QPalette, QColor
 
-        # creating a frame and assigning it to container
-        container = tk.Frame(self, height=400, width=600)
-        self.geometry('400x600+50+50')
-        # specifying the region where the frame is packed in root
-        container.pack(side="top", fill="both", expand=True)
-
-        # configuring the location of the container using grid
-        container.grid_rowconfigure(0, weight=1)
-        container.grid_columnconfigure(0, weight=1)
-
-        # We will now create a dictionary of frames
-        self.frames = {}
-        # we'll create the frames themselves later but let's add the components to the dictionary.
-        for F in (MainPage, SidePage, CompletionScreen):
-            frame = F(container, self)
-
-            # the windows class acts as the root window for the frames.
-            self.frames[F] = frame
-            frame.grid(row=0, column=0, sticky="nsew")
-
-        # Using a method to switch frames
-        self.show_frame(MainPage)
+def main():
+    app = QApplication(sys.argv)
     
-    def show_frame(self, cont):
-        frame = self.frames[cont]
-        # raises the current frame to the top
-        frame.tkraise()
-        
-class MainPage(tk.Frame):
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
-        labelCMD = tk.Label(self, text="Commandant")
-        labelCMD.pack(padx=2, pady=2, side="left")
-        labelShip = tk.Label(self, text="Vaisseau")
-        labelShip.pack(padx=2, pady=2)
-        
+    # Create the icon
+    icon = QIcon("assets/ico.png")
 
-        # We use the switch_window_button in order to call the show_frame() method as a lambda function
-        switch_window_button = tk.Button(
-            self,
-            text="Go to the Side Page",
-            command=lambda: controller.show_frame(SidePage),
-        )
-        switch_window_button.pack(side="bottom", fill=tk.X)
-        
-        
+    # Create the tray
+    tray = QSystemTrayIcon()
+    tray.setIcon(icon)
+    tray.setVisible(True)
+    menu = QMenu()
+    action = QAction("A menu item")
+    menu.addAction(action)
 
+    # Add a Quit option to the menu.
+    quit = QAction("Quit")
+    quit.triggered.connect(app.quit)
+    menu.addAction(quit)
 
-class SidePage(tk.Frame):
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
-        label = tk.Label(self, text="This is the Side Page")
-        label.pack(padx=10, pady=10)
-        
-        
-        switch_window_button = tk.Button(
-            self,
-            text="Go to the Completion Screen",
-            command=lambda: controller.show_frame(CompletionScreen),
-        )
-        switch_window_button.pack(side="bottom", fill=tk.X)
+    # Add the menu to the tray
+    tray.setContextMenu(menu)
     
+    window = MainWindow()
+    window.setStyleSheet("""
+                            windows {
+                                background-color: "ivory";
+                                color: "black";
+                            }
+                            QLabel {
+                                color: "hotpink"
+                            }
+                            QPushButton {
+                                font-size: 16px;
+                                background-color: "darkgreen"
+                            }
+                            QLineEdit {
+                                background-color: "white";
+                                color: "black";
+                            }
+                        """)
+    window.show()
+    sys.exit(app.exec())
+
+# Subclass QMainWindow to customize your application's main window
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        self.initUI()
+        
+    def ChooseTheme(self, start=0):
+        print("Appui sur le bouton")
+        if start != 0:
+            return 0
+        elif start == 0:
+            action = self.sender()
+            print(action.data())
+            
+            if action.data() == 'light':
+                print('light')
+            elif action.data() == 'dark':
+                print('dark')
+            else:
+                print('erreur lors de la selection du thème.')
+        
+        self.setStyleSheet("""
+                            Windows {
+                                background-color: "black";
+                                color: "white";
+                            }
+                            QLabel {
+                                color: "yellow"
+                            }
+                            QPushButton {
+                                font-size: 24px;
+                                background-color: "red"
+                            }
+                            QLineEdit {
+                                background-color: "white";
+                                color: "black";
+                            }
+                        """)
+    
+    def initUI(self):
+        
+        self.ChooseTheme(1)
+        # définition des actions des menus/toolbar
+        exitAct = QAction(QIcon('assets/ico.png'), '&Quitter', self)
+        exitAct.setShortcut('Ctrl+Q')
+        exitAct.setStatusTip('Quitter l\'application')
+        exitAct.triggered.connect(QApplication.instance().quit)
+        
+        lightThemeAct = QAction('&Light Theme', self)
+        lightThemeAct.setData('light')
+        lightThemeAct.triggered.connect(self.ChooseTheme)
+        darkThemeAct = QAction('&Dark Theme', self)
+        darkThemeAct.setData('dark')
+        darkThemeAct.triggered.connect(self.ChooseTheme)
+
+        self.statusBar()
+        
+        self.toolbar = self.addToolBar('Exit')
+        self.toolbar.addAction(exitAct)
+        
+        menubar = self.menuBar()
+        fileMenu = menubar.addMenu('&Fichier')
+        themeMenu = menubar.addMenu('&Thèmes')
+        fileMenu.addAction(exitAct)
+        themeMenu.addAction(lightThemeAct)
+        themeMenu.addAction(darkThemeAct)
+    
+
+        # Contenu de la fenetre
+        CmdLabel = QLabel('Commandant')
+        CmdLabel.setContentsMargins(5,0,10,0)
+        CmdValueLabel = QLabel('Name of CMD')
+        CmdValueLabel.setContentsMargins(10,0,10,0)
+        ShipLabel = QLabel('Vaisseau')
+        ShipLabel.setContentsMargins(5,0,10,0)
+        ShipValueLabel = QLabel('Name of ship')
+        ShipValueLabel.setContentsMargins(10,0,10,0)
+        
+        vLayout = QVBoxLayout()
+        gridCMD = QGridLayout()
+        
+        gridCMD.addWidget(CmdLabel, 1, 0)
+        gridCMD.addWidget(CmdValueLabel, 1, 1)
+        gridCMD.addWidget(ShipLabel, 2, 0)
+        gridCMD.addWidget(ShipValueLabel, 2, 1)
+        gridCMD.setRowStretch(gridCMD.rowCount(), 1)
+        gridCMD.setColumnStretch(gridCMD.columnCount(), 1)
+        
+        welcomeMessage = QLabel('Bienvenu Commandant')
+        PoliceMessage = QFont('Times', 20)
+        PoliceMessage.setBold(True)
+        #PoliceMessage.setItalic(True)
+        welcomeMessage.setFont(PoliceMessage)
+    
+        
+        
+        vLayout.addWidget(welcomeMessage)
+        vLayout.addLayout(gridCMD)
+
+        widget = QWidget()
+        grid = vLayout
+        widget.setLayout(grid)
+        self.setCentralWidget(widget)
+         
+        # Mise en place de la fenetre.
+        screen = QGuiApplication.primaryScreen().availableGeometry()
+        self.setGeometry(int(screen.width()/4), int(screen.height()/4), int(screen.width()/2), int(screen.height()/2))
+        self.setWindowTitle('ED-tool')
+        self.setWindowIcon(QIcon('assets/ico.png'))
+        #self.setWindowOpacity(0.9)
        
-
-
-class CompletionScreen(tk.Frame):
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
-        label = tk.Label(self, text="Completion Screen, we did it!")
-        label.pack(padx=10, pady=10)
-        switch_window_button = ttk.Button(
-            self, text="Return to menu", command=lambda: controller.show_frame(MainPage)
-        )
-        switch_window_button.pack(side="bottom", fill=tk.X)
+        self.setStyleSheet("background-color: rgba(255,100,100,255);")
+       
+        self.show()
 
 if __name__ == "__main__":
     print("Hello, World!")
-    root = App()
-    root.mainloop()
-    
-
+    main()

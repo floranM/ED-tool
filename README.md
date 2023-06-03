@@ -1,5 +1,5 @@
 # ED-tool
-version: 0.0.0001
+version: 0.0.0002
 
 ## french version:
 *go to [english version](#english-version)*
@@ -17,4 +17,6 @@ Pour plus d'informations ou de conseil, merci d'ouvrir un ticket afin d'obtenir 
 
 La première version alpha d'ED-tool est prévu pour la fin de l'été 2023
 
+### Pré-requis
+- pySide6 *``pip install pySide6``*
 ## English version:
